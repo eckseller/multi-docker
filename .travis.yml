@@ -1,0 +1,28 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t eckseller/react-test -f ./client/Dockerfile.dev ./client
+
+# Primary Test Running Section. Test Suites
+# If any scripts that we add exit with a status code OTHER THAN 0, then Travis CI assumes build failed!
+script:
+  - docker run eckseller/react-test npm run test -- --coverage
+
+# After tests successfully pass, build all of our Prod files from Dockerfile files, then push them to Dockerhub
+after_success:
+  - docker build -t eckseller/multi-client ./client
+  - docker build -t eckseller/multi-nginx  ./nginx
+  - docker build -t eckseller/multi-server ./server
+  - docker build -t eckseller/multi-worker ./worker 
+
+# Login to docker CLI
+# Set up encrypted env variables that are only accessible by Travis CI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  
+# Take images and push to Dockerhub
+  - docker push eckseller/multi-client   
+  - docker push eckseller/multi-nginx
+  - docker push eckseller/multi-server
+  - docker push eckseller/multi-worker
