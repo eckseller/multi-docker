@@ -19,6 +19,7 @@ after_success:
 
 # Login to docker CLI
 # Set up encrypted env variables that are only accessible by Travis CI
+# Enter environment variable key/values on Travis CI site
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
   
 # Take images and push to Dockerhub
@@ -26,3 +27,16 @@ after_success:
   - docker push eckseller/multi-nginx
   - docker push eckseller/multi-server
   - docker push eckseller/multi-worker
+
+deploy:
+  provider: elasticbeanstalk
+  region: "us-east-1"
+  app: "multi-docker"
+  env: "MultiDocker-env"
+  bucket_name: "elasticbeanstalk-us-east-1-001950941586"
+  bucket_path: "multi-docker"
+  on:
+    branch: master
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key:
+    secure: "$AWS_SECRET_KEY"
